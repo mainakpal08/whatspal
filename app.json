@@ -1,0 +1,6 @@
+{
+    "name": "[Py]scuss",
+    "description": "A real time non-persistent chat app built using WebSockets and Python 3",
+    "repository": "https://github.com/Sayan98/pyscuss",
+    "keywords": ["python3", "socketio", "websockets", "flask"]
+}

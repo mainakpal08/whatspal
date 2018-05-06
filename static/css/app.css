@@ -1,0 +1,73 @@
+.page {
+    display: none;
+    height: 100%;
+    position: relative;
+    width: 100%;
+}
+
+ul {
+    list-style-type: none;
+}
+
+.counter {
+    position: fixed;
+    right: 10px;
+    top: 4px;
+    color: gray;
+    font-weight: 500;
+}
+
+audio {
+    display: none;
+}
+
+/* Messages */
+
+.chatArea {
+    height: 100%;
+    padding-bottom: 60px;
+}
+
+.messages {
+    height: 100%;
+    margin: 0;
+    overflow-y: scroll;
+    padding: 10px 20px 10px 20px;
+}
+
+.log {
+    color: gray;
+    font-size: 1.5rem;
+    margin: 5px;
+    text-align: center;
+}
+
+.message.typing .messageBody {
+    color: gray;
+}
+
+.messageBody {
+    font-size: 2.5rem;
+}
+
+.username {
+    font-weight: 900;
+    overflow: hidden;
+    padding-right: 15px;
+    text-align: right;
+    font-size: 2.5rem;
+}
+
+/* Input */
+
+.inputMessage {
+    border: 10px solid #000;
+    bottom: 0;
+    left: 0;
+    height: 1.5em;
+    outline: none;
+    padding: 10px;
+    margin: 0;
+    position: fixed;
+    width: calc(100% - 40px);
+}
