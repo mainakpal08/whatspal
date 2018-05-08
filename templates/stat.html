@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+    
+    {% include 'head.html' %}
+    {% if clicks|length == 0 %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/breathe.css') }}?v=beta">
+    {% endif %}
+
+    <body>
+
+        <!-- Nav -->
+        <header>
+            <nav class="nav blue darken-2">
+                <div class="nav-wrapper container">
+                    <a href="/" itemprop="url" class="brand-logo site-logo"><i class="material-icons right">share</i>link.to</a>
+                    <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+                    <ul class="right hide-on-med-and-down">
+                        <li><a href="#" class="site-nav__link">
+                            <i class="material-icons right">info</i>
+                        </a></li>
+                    </ul>
+                    <ul class="side-nav" id="nav-mobile">
+                        <li><a href="#" class="site-nav__link">
+                            <i class="material-icons right">info</i>About
+                        </a></li>
+                    </ul>
+                </div>
+            </nav>
+        </header>
+
+
+
+
+        <!-- Content -->
+        <main>
+            <div class="container">
+                <!-- Stats -->
+                <div class="card horizontal">
+                    <div class="card-stacked">
+                        <div class="card-content">
+                            <span class="card-title grey-text text-darken-4">
+                                Analytics for <a href="/{{ short_link }}">link.to/{{ short_link }}</a>
+                                <a href="#!copy" class="copy_button" data-clipboard-text="/stats/{{ short_link }}">
+                                    <i id="copy_link" class="material-icons right">content_copy</i>
+                                </a>
+                            </span>
+                            
+                            <div>
+                                <span class="grey-text" id="date_string">&nbsp;</span>
+                                <span class="badge">Total clicks: {{ clicks|length }}</span>
+                            </div>
+                            
+                            <p>Original URL: <a href="{{ full_link }}">{{ full_link }}</a></p>
+
+                            {% if clicks|length == 0 %}
+                            
+                            <div>
+                                <p class="flow-text">Uh Oh, there seems to be no activity!<p>
+                                <p class="flow-text">Breathe in, breathe out ...</p>
+
+                                <div class="breath-container">
+                                    <div class="breathe">
+                                        <div class="circle"></div>
+                                        <div class="circle"></div>
+                                        <div class="circle"></div>
+                                        <div class="circle"></div>
+                                        <div class="circle"></div>
+                                        <div class="circle"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% else %}
+
+                            <div class="row">
+                                <div class="col s12 chart-container">
+                                    <canvas id="traffic_chart" class="container"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col s12 m6 chart-container" style="min-height: 200px">
+                                    <canvas id="referrer_chart"></canvas>
+                                </div>
+                                <div class="col s12 m6 chart-container" style="min-height: 200px">
+                                    <canvas id="ua_chart"></canvas>
+                                </div>
+                            </div>
+
+                            {% endif %}
+
+                        </div>
+
+                        <div class="card-action">
+                            <a href="/stats/{{ short_link }}" class="blue-text">Share Stats</a>
+                            <a href="#" class="blue-text">Report Link</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+
+        {% include 'footer.html' %}
+
+
+        <!--Import jQuery before materialize.js-->
+        <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/materialize.min.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/main.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/clipboard.min.js') }}"></script>
+        <script type="text/javascript">
+            // time stamp 
+            var timestamp = moment.unix({{ creation_time }});
+            var utcOffset = moment().utcOffset();
+            var local_time = timestamp.add(utcOffset, "minutes");
+            var dateString = local_time.fromNow();
+            document.getElementById("date_string").textContent = "Created " + dateString;
+
+            // copy link to clipboard
+            var clipboard = new Clipboard('.copy_button');
+
+            clipboard.on('success', function(e) {
+                Materialize.toast('Copied to Clipboard', 4000, 'rounded');
+            });
+
+        </script>
+        
+        {% if clicks|length > 0 %}
+        <script type="text/javascript" src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
+        <script type="text/javascript">
+            // traffic plot
+            var data = [
+                {% for ts in daily_visits %}
+                {
+                    t: moment.utc({{ ts*1000 }}),
+                    y: {{ daily_visits[ts] }}
+                },
+                {% endfor %}
+            ];
+
+            // container
+            var tctx = document.getElementById("traffic_chart").getContext('2d');
+
+            var trafficChart = new Chart(tctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        data: data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.4)',
+                        borderColor: 'rgba(54, 162, 235, 0.6)',
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive : true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        xAxes: [{
+                            type: 'time',
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 20
+                            }
+                        }],
+                        yAxes: [{
+                                    display: true,
+                                    ticks: {
+                                        beginAtZero: true,
+                                        callback: function(value, index, values) {
+                                            if (Math.floor(value) === value) {
+                                                return value;
+                                            }
+                                        }
+                                    }
+                        }]
+                    },
+                    title: {
+                        display: true,
+                        text: 'Traffic',
+                        fontSize: 20
+                    },
+                    elements: {
+                        line: {
+                            tension: 0, // disables bezier curves
+                        }
+                    },
+                    tooltips: {
+                        callbacks: {
+                            title: function(tooltipItem, data) {
+                                date = tooltipItem[0]
+                                        .xLabel
+                                        .format('MMMM Do YYYY');
+                                return date + " UTC";
+                            },
+                            label: function(tooltipItem, data) {
+                                clicks = tooltipItem.yLabel;
+                                return `Clicks: ${clicks}`;
+                            }
+                        }
+                    },
+                    legend: {
+                        display: false
+                    }
+                }
+            });
+        
+            // referrer plot
+            var rpie = [];
+            var rlabel = [];
+            {% for ref in referrers %}
+            rlabel.push("{{ ref }}");
+            rpie.push("{{ referrers[ref] }}");
+            {% endfor %}
+
+            // container
+            var rctx = document.getElementById("referrer_chart").getContext('2d');
+
+            var refChart = new Chart(rctx, {
+                type: 'doughnut',
+                options: {
+                    title: {
+                        display: true,
+                        text: 'Referrers',
+                        fontSize: 20
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                },
+                data: {
+                    labels: rlabel,
+                    datasets: [{
+                        data: rpie,
+                        backgroundColor: [
+                            "rgb(54, 162, 235)",
+                            "rgb(255, 99, 132)",
+                            "rgb(255, 205, 86)",
+                            "rgb(54, 162, 235)",
+                            "rgb(255, 99, 132)",
+                            "rgb(255, 205, 86)"
+                        ]
+                    }]
+                }
+            });
+
+
+            // ua plot
+            var upie = [];
+            var ulabel = [];
+            {% for ua in user_agents %}
+            ulabel.push("{{ ua }}");
+            upie.push("{{ user_agents[ua] }}");
+            {% endfor %}
+
+            // container
+            var uctx = document.getElementById("ua_chart").getContext('2d');
+
+            var refChart = new Chart(uctx, {
+                type: 'doughnut',
+                options: {
+                    title: {
+                        display: true,
+                        text: 'Browsers',
+                        fontSize: 20
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                },
+                data: {
+                    labels: ulabel,
+                    datasets: [{
+                        data: upie,
+                        backgroundColor: [
+                            "rgb(255, 99, 132)",
+                            "rgb(54, 162, 235)",
+                            "rgb(255, 205, 86)",
+                            "rgb(180, 162, 235)",
+                        ]
+                    }]
+                }
+            });
+
+        </script>
+        {% endif %}
+    </body>
+</html>
